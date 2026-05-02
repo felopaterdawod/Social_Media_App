@@ -4,14 +4,16 @@ import {z} from 'zod'
 // email : string;
 // password : string
 
-import { login, signup } from "./auth.validation";
+import { confirmEmail, login, resendConfirmEmail, signup } from "./auth.validation";
 
 
 
 // }
 
-export type loginDto = z.infer<typeof login.body>
-export type signupDto = z.infer<typeof signup.body>
+export type LoginDto = z.infer<typeof login.body>
+export type SignupDto = z.infer<typeof signup.body>
+export type ConfirmEmailDto = z.infer<typeof confirmEmail.body>
+export type ResendConfirmEmailDto = z.infer<typeof resendConfirmEmail.body>
 
 
 

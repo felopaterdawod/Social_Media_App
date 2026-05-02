@@ -1,16 +1,23 @@
 
 import express from 'express'
-import { authRouter } from './modules';
+import { authRouter, userRouter } from './modules';
 import { globalErrorHandler } from './middleware';
 import { PORT } from './config/config';
 import connectDB from './DB/connection.db';
+import { redisService } from './common/services';
+import cors from 'cors';
 
 
 
 
 
 const bootstrap = async():Promise<void> => {
+
+
     const app: express.Express  = express();
+
+    app.use(express.json(), cors());
+
 
     app.get('/',(req: express.Request , res: express.Response , next:express.NextFunction): express.Response =>{
          return res.status(200).json({message: "Landing Page"})
@@ -18,6 +25,7 @@ const bootstrap = async():Promise<void> => {
 
     //application-routing
     app.use("/auth" , authRouter)
+    app.use("/user" , userRouter)
 
 
     app.get('/*dummy',(req: express.Request , res: express.Response , next:express.NextFunction): express.Response =>{
@@ -32,6 +40,7 @@ const bootstrap = async():Promise<void> => {
 
     //DB
     await connectDB()
+    await redisService.connect()
 
 
 

@@ -105,8 +105,8 @@ export class AuthenticationService {
             data: {
                 email,
                 username,
-                password: await generateHash({ plainText: password }),
-                phone: phone ? await generateEncryption(phone) : undefined
+                password,
+                phone
             }
         })
 

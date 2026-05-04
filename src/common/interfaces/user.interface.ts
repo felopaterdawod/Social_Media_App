@@ -22,5 +22,7 @@ export interface IUser {
 
     createdAt?: Date;
     updatedAt?: Date;
+    deletedAt?: Date;
+    restoredAt?: Date;
 
 }

@@ -9,7 +9,7 @@ export interface IUser {
     password?: string;
     phone?: string;
     profilePicture: string;
-    ProfileCoverPicture: string[];
+    ProfileCoverPictures: string[];
 
 
     gender: GenderEnum,

@@ -21,7 +21,7 @@ const userSchema = new Schema<IUser>({
 
     phone: { type: String },
     profilePicture: { type: String },
-    ProfileCoverPicture: { type: [String] },
+    ProfileCoverPictures: { type: [String] },
 
 
     gender: { type: Number, enum: GenderEnum, default: GenderEnum.Male },

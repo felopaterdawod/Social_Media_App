@@ -46,8 +46,8 @@ export class TokenService {
         try {
             return jwt.verify(token, secret) as JwtPayload
         } catch (error) {
-            return null;
-        }
+console.log("VERIFY ERROR:", error); 
+        throw new UnauthorizedException("Invalid or expired token");        }
     }
 
 
@@ -105,12 +105,13 @@ export class TokenService {
         const decoded = jwt.decode(token) as JwtPayload;
         console.log({ decoded });
 
-        if (!decoded?.aud?.length) {
-            throw new BadRequestException("Missing token audience")
-        }
+        const aud = decoded?.aud;
 
-        const [tokenApproach, signatureLevel] = decoded.aud;
-        console.log({ tokenApproach, signatureLevel });
+if (!aud || !Array.isArray(aud) || aud.length < 2) {
+    throw new BadRequestException("Invalid token audience format");
+}
+
+const [tokenApproach, signatureLevel] = aud;
 
         if (tokenApproach == undefined || signatureLevel == undefined) {
             throw new BadRequestException(`Missing token audience`)

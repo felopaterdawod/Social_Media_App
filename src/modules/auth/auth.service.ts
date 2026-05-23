@@ -3,7 +3,7 @@ import { BadRequestException, ConflictException, NotFoundException } from "../..
 import { UserRepository } from "../../DB/repository/user.repository";
 import { compareHash, generateEncryption, generateHash } from "../../common/utils/security";
 import { emailEvent, emailTemplate, sendEmail } from "../../common/utils/email";
-import { redisService, RedisService, TokenService } from "../../common/services";
+import { notificationService, NotificationService, redisService, RedisService, TokenService } from "../../common/services";
 import { EmailEnum, ProviderEnum } from "../../common/enums";
 import { createRandomOtp } from "../../common/utils/otp";
 import { ConfirmEmailDto, LoginDto, ResendConfirmEmailDto, SignupDto } from "./auth.dto";
@@ -16,15 +16,17 @@ export class AuthenticationService {
     private readonly userRepository: UserRepository;
     private readonly redis: RedisService
     private readonly tokenService: TokenService;
+    private readonly notification: NotificationService
 
     constructor() {
         this.userRepository = new UserRepository()
         this.tokenService = new TokenService()
         this.redis = redisService
+        this.notification = notificationService
     }
 
     public async login(inputs: LoginDto, issuer: string): Promise<ILoginResponse> {
-        const { email, password } = inputs;
+        const { email, password, FCM } = inputs;
 
         const user = await this.userRepository.findOne({
             filter: { email, provider: ProviderEnum.SYSTEM },
@@ -38,6 +40,16 @@ export class AuthenticationService {
 
         if (!user || !user.password || !(await compareHash({ plainText: password, cipherText: user.password }))) {
             throw new NotFoundException("Invalid Login credentials.");
+        }
+
+        if (FCM) {
+            await this.redis.addFCM(user._id, FCM)
+            const tokens = await this.redis.getFCMs(user._id);
+            if (tokens?.length) {
+                await this.notification.sendNotifications({ tokens, data: { title: "Login", body: `New Login at ${new Date()}` } })
+
+            }
+
         }
 
 

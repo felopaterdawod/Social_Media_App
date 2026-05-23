@@ -26,34 +26,43 @@ class UserService {
             ContentType,
             Originalname,
         }) 
-        user.profilePicture = key as string
-        await user.save()
 
-        if (oldPic) {
-            await this.s3.deleteAsset({Key:oldPic})
-        }
+        console.log(`ContentType: ${ContentType}`);
+        
+        // user.profilePicture = key as string
+        // await user.save()
+
+        // if (oldPic) {
+        //     await this.s3.deleteAsset({Key:oldPic})
+        // }
         return {url,user}
     }
 
     async profileCoverImages(files: Express.Multer.File[], user: HydratedDocument<IUser>) {
-        const oldUrls = user.ProfileCoverPictures
-        const urls = await this.s3.uploadAssets({
-            files,
-            path: `Users/${user._id.toString()}/Profile/Cover`,
-            storageApproach: StorageApproachEnum.DISK,
-            uploadApproach:UploadApproachEnum.LARGE
-        }) 
-        user.ProfileCoverPictures = urls
-        await user.save()
-
-        if (oldUrls) {
-            await this.s3.deleteAssets({
-                Keys: oldUrls.map(ele => {return {Key:ele}})
-            })
-        }
-        return user.toJSON()
+    if (!files || files.length === 0) {
+        throw new Error("No files uploaded"); 
     }
 
+    const oldUrls = user.ProfileCoverPictures;
+    
+    const urls = await this.s3.uploadAssets({
+        files,
+        path: `Users/${user._id.toString()}/Profile/Cover`,
+        storageApproach: StorageApproachEnum.DISK,
+        uploadApproach: UploadApproachEnum.LARGE
+    }); 
+    
+    user.ProfileCoverPictures = urls;
+    await user.save();
+
+    if (oldUrls && oldUrls.length > 0) {
+        await this.s3.deleteAssets({
+            Keys: oldUrls.map(ele => ({ Key: ele }))
+        });
+    }
+    
+    return user.toJSON();
+}
     async profile(user: HydratedDocument<IUser>): Promise<any> {
         return user.toJSON()
     }
@@ -98,6 +107,7 @@ class UserService {
     }
 
     async deleteProfile(user:HydratedDocument<IUser>){
+        await this.s3.deleteFolderByPrefix({prefix: `User/${user._id.toString()}`})
 
         const account = await this.userRepository.deleteOne({filter: {_id: user._id , force:true}})
 
@@ -105,7 +115,6 @@ class UserService {
             
             throw new NotFoundException("Invalid account")
         }
-        await this.s3.deleteFolderByPrefix({prefix: `User/${user._id.toString()}`})
 
         return account
 

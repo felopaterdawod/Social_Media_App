@@ -4,7 +4,7 @@ import { authentication, } from "../../middleware/authentication.middleware";
 import userService from "./user.service";
 import { authorization } from "../../middleware";
 import { endpoint } from "./user.authorization";
-import {  StorageApproachEnum, TokenTypeEnum, UploadApproachEnum } from "../../common/enums";
+import {  StorageApproachEnum, TokenTypeEnum} from "../../common/enums";
 import { cloudFileUpload, fileFieldValidation } from "../../common/utils/multer";
 
 const router = Router();
@@ -21,10 +21,14 @@ router.patch("/profile-cover-images",
         const data = await userService.profileCoverImages(req.files as Express.Multer.File[],req.user)
         return successResponse({ res, data });
     });
-
+//================================================================
     router.patch("/profile-image",
     authentication(),
-    
+    cloudFileUpload({
+        validation:fileFieldValidation.image,
+        storageApproach:StorageApproachEnum.DISK,
+        
+    }).single("attachment"),
     async (req: Request, res: Response, next: NextFunction) => {
         const data = await userService.profileImage(req.body ,req.user)
         return successResponse({ res, data });
@@ -50,12 +54,28 @@ router.post("/rotate-token", authentication(TokenTypeEnum.REFRESH), async (req, 
 })
 
 
+// router.delete("/",
+//     authentication(),
+    
+//     async (req: Request, res: Response, next: NextFunction) => {
+//         const data = await userService.deleteProfile(req.user)
+//         return successResponse({ res, data });
+//     });
+
+
 router.delete("/",
     authentication(),
-    
     async (req: Request, res: Response, next: NextFunction) => {
-        const data = await userService.deleteProfile(req.user)
-        return successResponse({ res, data });
-    });
+        try {
+            const data = await userService.deleteProfile(req.user);
+            return successResponse({ res, data });
+        } catch (error) {
+            next(error); // هيبعت الإيرور للـ Global Error Handler بتاعك
+        }
+    }
+);
+
+
+
 
 export default router;

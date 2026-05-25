@@ -1,4 +1,4 @@
-import { models, Schema, model, Query, HydratedDocument } from "mongoose";
+import { models, Schema, model, Query, HydratedDocument, Types } from "mongoose";
 import { GenderEnum, ProviderEnum, RoleEnum } from "../../common/enums";
 import { IUser } from "../../common/interfaces";
 import { generateEncryption, generateHash } from "../../common/utils/security";
@@ -27,6 +27,8 @@ const userSchema = new Schema<IUser>({
     gender: { type: Number, enum: GenderEnum, default: GenderEnum.Male },
     role: { type: Number, enum: RoleEnum, default: RoleEnum.USER },
     provider: { type: Number, enum: ProviderEnum, default: ProviderEnum.SYSTEM },
+
+    friends: [{ type: Types.ObjectId, ref: "user" }],
 
 
     changeCredentialsTime: { type: Date },
@@ -108,8 +110,8 @@ userSchema.pre(["deleteOne", "findOneAndDelete"], function () {
 userSchema.pre("save", async function (this: HydratedDocument<IUser> & { wasNew: boolean }) {
     this.wasNew = this.isNew
 
-    if (this.password &&this.isModified("password")) {
-        this.password = await generateHash( {plainText:this.password} )
+    if (this.password && this.isModified("password")) {
+        this.password = await generateHash({ plainText: this.password })
     }
 
     if (this.phone && this.isModified("phone")) {

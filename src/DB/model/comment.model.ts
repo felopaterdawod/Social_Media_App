@@ -1,12 +1,13 @@
 import { models, Schema, model, Query, HydratedDocument, Types } from "mongoose";
 import { AvailabilityEnum } from "../../common/enums";
 import { IPost } from "../../common/interfaces";
+import { IComment } from "../../common/interfaces/comment.interface";
+import { required } from "zod/mini";
 
 
 
-const postSchema = new Schema<IPost>({
+const commentSchema = new Schema<IComment>({
 
-    folderId: { type: String, required: true },
     content: {
         type: String, required: function (this) {
             return !this.attachments?.length
@@ -18,9 +19,10 @@ const postSchema = new Schema<IPost>({
         default: []
     },
 
-    availability: { type: Number, enum: AvailabilityEnum, default: AvailabilityEnum.PUBLIC },
     likes: [{ type: Types.ObjectId, ref: "User" }],
     tags: [{ type: Types.ObjectId, ref: "User" }],
+    postId: [{ type: Types.ObjectId, ref: "Post", required: true }],
+    commentId: [{ type: Types.ObjectId, ref: "Comment" }],
     updatedBy: { type: Types.ObjectId, ref: "User" },
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
     deletedAt: { type: Date },
@@ -40,15 +42,17 @@ const postSchema = new Schema<IPost>({
 
     })
 
-postSchema.virtual("comments", {
+
+commentSchema.virtual("reply", {
     localField: "_id",
-    foreignField: "postId",
-    ref: "Comment",
-    justOne:true
+    foreignField: "commentId",
+    ref: "Comment"
 })
 
 
-postSchema.pre(["findOne", "find", "countDocuments"], function () {
+
+
+commentSchema.pre(["findOne", "find", "countDocuments"], function () {
     const query = this.getQuery()
     if (query.paranoid === false) {
         this.setQuery({ ...query })
@@ -57,7 +61,7 @@ postSchema.pre(["findOne", "find", "countDocuments"], function () {
     }
 })
 
-postSchema.pre(["updateOne", "findOneAndUpdate"], function () {
+commentSchema.pre(["updateOne", "findOneAndUpdate"], function () {
 
 
     const update = this.getUpdate() as HydratedDocument<IPost>
@@ -80,7 +84,7 @@ postSchema.pre(["updateOne", "findOneAndUpdate"], function () {
 })
 
 
-postSchema.pre(["deleteOne", "findOneAndDelete"], function () {
+commentSchema.pre(["deleteOne", "findOneAndDelete"], function () {
 
 
     const update = this.getUpdate() as HydratedDocument<IPost>
@@ -97,5 +101,5 @@ postSchema.pre(["deleteOne", "findOneAndDelete"], function () {
 
 
 
-export const PostModel = models.Post || model<IPost>("Post", postSchema)
-PostModel.syncIndexes()
+export const CommentModel = models.Comment || model<IComment>("Comment", commentSchema)
+CommentModel.syncIndexes()

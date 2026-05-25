@@ -4,17 +4,17 @@ import { AvailabilityEnum } from "../enums";
 
 
 export interface IPost {
- 
+
     folderId: string;
     attachments?: string[];
     content?: string;
 
     likes?: Types.ObjectId[] | IUser[];
     tags?: Types.ObjectId[] | IUser[];
-    availability : AvailabilityEnum;
+    availability: AvailabilityEnum;
 
-    createdBy : Types.ObjectId | IUser;
-    updatedBy? : Types.ObjectId | IUser;
+    createdBy: Types.ObjectId | IUser;
+    updatedBy?: Types.ObjectId | IUser;
 
     createdAt: Date;
     updatedAt?: Date;

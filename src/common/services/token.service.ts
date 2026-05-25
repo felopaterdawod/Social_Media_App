@@ -3,7 +3,7 @@ import { ACCESS_EXPIRES_IN, REFRESH_EXPIRES_IN, SYSTEM_ACCESS_TOKEN_SECRET_KEY, 
 import { RoleEnum, TokenTypeEnum } from '../enums'
 import { BadRequestException, NotFoundException, UnauthorizedException } from '../exceptions'
 import { UserRepository } from '../../DB/repository'
-import { redisService, RedisService } from './redis.security'
+import { redisService, RedisService } from './redis.service'
 import { HydratedDocument, Types } from 'mongoose'
 import { IUser } from '../interfaces'
 import { randomUUID } from 'node:crypto'
@@ -46,8 +46,9 @@ export class TokenService {
         try {
             return jwt.verify(token, secret) as JwtPayload
         } catch (error) {
-console.log("VERIFY ERROR:", error); 
-        throw new UnauthorizedException("Invalid or expired token");        }
+            console.log("VERIFY ERROR:", error);
+            throw new UnauthorizedException("Invalid or expired token");
+        }
     }
 
 
@@ -107,11 +108,11 @@ console.log("VERIFY ERROR:", error);
 
         const aud = decoded?.aud;
 
-if (!aud || !Array.isArray(aud) || aud.length < 2) {
-    throw new BadRequestException("Invalid token audience format");
-}
+        if (!aud || !Array.isArray(aud) || aud.length < 2) {
+            throw new BadRequestException("Invalid token audience format");
+        }
 
-const [tokenApproach, signatureLevel] = aud;
+        const [tokenApproach, signatureLevel] = aud;
 
         if (tokenApproach == undefined || signatureLevel == undefined) {
             throw new BadRequestException(`Missing token audience`)

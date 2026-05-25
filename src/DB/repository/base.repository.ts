@@ -1,7 +1,8 @@
 import { AnyKeys, CreateOptions, DeleteResult, FlattenMaps, HydratedDocument, Model, PopulateOption, PopulateOptions, ProjectionType, QueryFilter, QueryOptions, ReturnsNewDoc, Types, UpdateQuery, UpdateResult, UpdateWithAggregationPipeline } from "mongoose";
-import { IUser } from "../../common/interfaces";
+import { IPaginate, IUser } from "../../common/interfaces";
 import { populate } from "dotenv";
 import { UpdateOptions } from "mongodb";
+import { array } from "zod";
 
 
 export class DatabaseRepository<TRawDoc> {
@@ -66,7 +67,7 @@ export class DatabaseRepository<TRawDoc> {
     }: {
         filter?: QueryFilter<TRawDoc>,
         projection?: ProjectionType<TRawDoc> | null | undefined,
-        options?: QueryOptions<TRawDoc> & { lean: false } | null | undefined
+        options?: QueryOptions<TRawDoc> & { lean?: false } | null | undefined
     }): Promise<HydratedDocument<IUser>>
 
     async findOne({
@@ -76,7 +77,7 @@ export class DatabaseRepository<TRawDoc> {
     }: {
         filter?: QueryFilter<TRawDoc>,
         projection?: ProjectionType<TRawDoc> | null | undefined,
-        options?: QueryOptions<TRawDoc> & { lean: true } | null | undefined
+        options?: QueryOptions<TRawDoc> & { lean?: true } | null | undefined
     }): Promise<null | FlattenMaps<IUser>>
 
     async findOne({
@@ -99,21 +100,62 @@ export class DatabaseRepository<TRawDoc> {
 
 
     async find({
-    filter,
-    projection,
-    options
-}: {
-    filter?: QueryFilter<TRawDoc>,
-    projection?: ProjectionType<TRawDoc> | null | undefined,
-    options?: QueryOptions<TRawDoc> | null | undefined
-}): Promise<HydratedDocument<TRawDoc>[]> {
-    const doc = this.model.find(filter, projection)
+        filter,
+        projection,
+        options
+    }: {
+        filter?: QueryFilter<TRawDoc>,
+        projection?: ProjectionType<TRawDoc> | null | undefined,
+        options?: QueryOptions<TRawDoc> | null | undefined
+    }): Promise<HydratedDocument<TRawDoc>[]> {
+        const doc = this.model.find(filter, projection)
 
-    if (options?.populate) doc.populate(options.populate as PopulateOptions[]);
-    if (options?.lean) doc.lean(options.lean);
-    
-    return await doc.exec()
-}
+        if (options?.populate) doc.populate(options.populate as PopulateOptions[]);
+        // if (options?.lean) doc.lean(options.lean);
+        if (options?.skip) doc.skip(options.skip)
+        if (options?.limit) doc.limit(options.limit)
+
+        return await doc.exec()
+    }
+
+    async paginate({
+        filter,
+        projection,
+        options = {},
+        page = 0,
+        size = 5,
+    }: {
+        filter?: QueryFilter<TRawDoc>,
+        projection?: ProjectionType<TRawDoc> | null | undefined,
+        options?: QueryOptions<TRawDoc>,
+        page?: number | string | undefined,
+        size?: number | string | undefined,
+    }): Promise<IPaginate<TRawDoc>> {
+
+
+        let count: number = -1;
+
+        if (Number(page) > 0) {
+            page = parseInt(page as string);
+            size = parseInt(size as string);
+            options.skip = (page - 1) * size;
+            options.limit = size;
+            count = await this.model.countDocuments({ filter })
+        }
+
+        const docs = await this.find({ filter: filter || {}, projection, options })
+
+        return {
+            docs,
+            ...(Number(page) > 0 ? {
+                currentPage: page,
+                size,
+                pages: Math.ceil(count / parseInt(size as string))
+
+
+            } : {})
+        }
+    }
 
 
     // Find By ID
@@ -170,7 +212,15 @@ export class DatabaseRepository<TRawDoc> {
         options?: QueryOptions<TRawDoc> & ReturnsNewDoc
 
     }): Promise<HydratedDocument<TRawDoc> | null> {
-        return await this.model.findOneAndUpdate(filter, {...update , $inc:{__v:1}}, options)
+        if (Array.isArray(update)) {
+
+            update.push({ $set: { __v: { $add: ['$__v', 1] } } })
+
+            return await this.model.findOneAndUpdate(filter, update, { ...options, updatePipeline: true })
+
+
+        }
+        return await this.model.findOneAndUpdate(filter, update, { ...options, $incr: { __v: 1 } })
     }
 
 
@@ -184,7 +234,7 @@ export class DatabaseRepository<TRawDoc> {
         options?: QueryOptions<TRawDoc> & ReturnsNewDoc
 
     }): Promise<HydratedDocument<TRawDoc> | null> {
-        return await this.model.findByIdAndUpdate(_id, {...update , $inc:{__v:1}}, options)
+        return await this.model.findByIdAndUpdate(_id, { ...update, $inc: { __v: 1 } }, options)
     }
 
     async updateOne({
@@ -197,7 +247,7 @@ export class DatabaseRepository<TRawDoc> {
         options?: UpdateOptions | null
 
     }): Promise<UpdateResult> {
-        return await this.model.updateOne(filter,{...update , $inc:{__v:1}}, options)
+        return await this.model.updateOne(filter, { ...update, $inc: { __v: 1 } }, options)
     }
 
 

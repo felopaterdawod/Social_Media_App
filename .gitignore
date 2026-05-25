@@ -5,3 +5,8 @@ build/
 .env*
 .env.development
 .env.production
+# Ignore Firebase JSON key
+src/config/*.json
+
+# Ignore any local config files if needed (Optional)
+# src/config/local-config.ts

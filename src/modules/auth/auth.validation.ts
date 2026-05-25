@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {string, z} from 'zod';
 import { generalValidationFields } from '../../common/validation';
 
 
@@ -38,6 +38,7 @@ export const confirmEmail = {
 export const login = {
     body: resendConfirmEmail.body.safeExtend({
         password: generalValidationFields.password,
+        FCM:string().optional()
         
     })
 }

@@ -312,30 +312,51 @@ export class S3Service {
     }
 
 
-    async deleteFolderByPrefix({
-        Bucket = AWS_BUCKET_NAME,
-        prefix
-    }: {
-
-        Bucket?: string,
-        prefix: string,
-
-    }): Promise<DeleteObjectsCommandOutput> {
-
-        const result = await this.listFolderDir({ Bucket, prefix })
-        const Keys = result.Contents
-            ?.filter((ele) => ele.Key)
-            .map((ele) => ({
-                Key: ele.Key as string,
-            })) || [];
-
-            console.log(Keys);
 
 
-        return await this.deleteAssets({ Bucket, Keys })
+async deleteFolderByPrefix({ prefix }: { prefix: string }) {
+    const listParams = {
+        Bucket: "YOUR_BUCKET_NAME",
+        Prefix: prefix,
+    };
+    const listedObjects = await this.client.send(new ListObjectsV2Command(listParams));
 
-
+    if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+        return; 
     }
+
+    const deleteParams = {
+        Bucket: "YOUR_BUCKET_NAME",
+        Delete: {
+            Objects: listedObjects.Contents.map((obj) => ({ Key: obj.Key })),
+        },
+    };
+
+    await this.client.send(new DeleteObjectsCommand(deleteParams));
+
+}
+
+    // async deleteFolderByPrefix({
+    //     Bucket = AWS_BUCKET_NAME,
+    //     prefix
+    // }: {
+
+    //     Bucket?: string,
+    //     prefix: string,
+
+    // }): Promise<DeleteObjectsCommandOutput> {
+
+    //     const result = await this.listFolderDir({ Bucket, prefix })
+    //     const Keys = result.Contents
+    //         ?.filter((ele) => ele.Key)
+    //         .map((ele) => ({
+    //             Key: ele.Key as string,
+    //         })) || [];
+ 
+    //     return await this.deleteAssets({ Bucket, Keys })
+
+
+    // }
 
 }
 

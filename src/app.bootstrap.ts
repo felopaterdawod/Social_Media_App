@@ -1,10 +1,9 @@
-
 import express from 'express'
-import { authRouter, userRouter } from './modules';
+import { authRouter, postRouter, userRouter } from './modules';
 import { globalErrorHandler } from './middleware';
 import { PORT } from './config/config';
 import connectDB from './DB/connection.db';
-import { redisService, s3Service } from './common/services';
+import { notificationService, redisService, s3Service } from './common/services';
 import cors from 'cors';
 import { promisify } from 'node:util';
 import { pipeline } from 'node:stream';
@@ -26,9 +25,24 @@ const bootstrap = async (): Promise<void> => {
         return res.status(200).json({ message: "Landing Page" })
     })
 
+     app.post('/send-notification', async(req: express.Request, res: express.Response, next: express.NextFunction):Promise<express.Response> => {
+        console.log({token:req.body.token});
+        await notificationService.sendNotification({
+            token : req.body.token,
+            data:{
+                title:"first time",
+                body: 'hello world'
+            }
+        })
+        
+        return res.status(200).json({ message: "Landing Page" })
+    })
+
+
     //application-routing
     app.use("/auth", authRouter)
     app.use("/user", userRouter)
+    app.use("/post", postRouter)
 
 
     app.get("/uploads/*path", async (req: express.Request, res: express.Response, next: express.NextFunction) => {

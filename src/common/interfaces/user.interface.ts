@@ -28,4 +28,6 @@ export interface IUser {
     deletedAt?: Date;
     restoredAt?: Date;
 
+    isDeleted?: boolean;
+
 }

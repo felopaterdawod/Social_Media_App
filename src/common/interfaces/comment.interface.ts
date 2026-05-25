@@ -13,12 +13,15 @@ export interface IComment {
     postId: Types.ObjectId | IPost;
     commentId: Types.ObjectId | IComment;
 
-    createdBy: Types.ObjectId | IUser,
-    updatedBy?: Types.ObjectId | IUser,
+    createdBy: Types.ObjectId | IUser;
+    updatedBy?: Types.ObjectId | IUser;
 
-    createdAt: Date
-    deletedAt?: Date
-    restoredAt?: Date
-    updatedAt?: Date
+    createdAt: Date;
+    deletedAt?: Date;
+    restoredAt?: Date;
+    updatedAt?: Date;
+
+    isDeleted?: boolean;
+
 
 }

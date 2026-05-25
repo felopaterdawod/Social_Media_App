@@ -21,5 +21,8 @@ export interface IPost {
     restoredAt?: Date;
     deletedAt?: Date;
 
+    isDeleted?: boolean;
+
+
 
 }

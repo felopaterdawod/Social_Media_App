@@ -1,6 +1,7 @@
-import { models, Schema, model, Query, HydratedDocument, Types } from "mongoose";
+import { models, Schema, model, Query, HydratedDocument, Types, CallbackWithoutResult, CallbackWithoutResultAndOptionalError } from "mongoose";
 import { AvailabilityEnum } from "../../common/enums";
 import { IPost } from "../../common/interfaces";
+import { NextFunction } from "express";
 
 
 
@@ -26,6 +27,11 @@ const postSchema = new Schema<IPost>({
     deletedAt: { type: Date },
     restoredAt: { type: Date },
 
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+
 
 
 },
@@ -44,8 +50,11 @@ postSchema.virtual("comments", {
     localField: "_id",
     foreignField: "postId",
     ref: "Comment",
-    justOne:true
+    justOne: true
 })
+
+
+
 
 
 postSchema.pre(["findOne", "find", "countDocuments"], function () {
@@ -94,6 +103,7 @@ postSchema.pre(["deleteOne", "findOneAndDelete"], function () {
         this.setQuery({ deletedAt: { $exists: true }, ...query })
     }
 })
+
 
 
 

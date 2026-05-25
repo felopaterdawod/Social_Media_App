@@ -28,6 +28,11 @@ const commentSchema = new Schema<IComment>({
     deletedAt: { type: Date },
     restoredAt: { type: Date },
 
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+
 
 
 },

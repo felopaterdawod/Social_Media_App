@@ -37,6 +37,11 @@ const userSchema = new Schema<IUser>({
     deletedAt: { type: Date },
     restoredAt: { type: Date },
 
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+
 
 },
     {

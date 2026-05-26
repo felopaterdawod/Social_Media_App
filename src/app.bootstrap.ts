@@ -8,6 +8,7 @@ import cors from 'cors';
 import { promisify } from 'node:util';
 import { pipeline } from 'node:stream';
 import { successResponse } from './common/response';
+import { storyRouter } from './modules/story';
 
 
 
@@ -43,6 +44,7 @@ const bootstrap = async (): Promise<void> => {
     app.use("/auth", authRouter)
     app.use("/user", userRouter)
     app.use("/post", postRouter)
+    app.use("/story", storyRouter);
 
 
     app.get("/uploads/*path", async (req: express.Request, res: express.Response, next: express.NextFunction) => {

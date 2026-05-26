@@ -54,13 +54,7 @@ router.post("/rotate-token", authentication(TokenTypeEnum.REFRESH), async (req, 
 })
 
 
-// router.delete("/",
-//     authentication(),
-    
-//     async (req: Request, res: Response, next: NextFunction) => {
-//         const data = await userService.deleteProfile(req.user)
-//         return successResponse({ res, data });
-//     });
+;
 
 
 router.delete("/",
@@ -70,7 +64,52 @@ router.delete("/",
             const data = await userService.deleteProfile(req.user);
             return successResponse({ res, data });
         } catch (error) {
-            next(error); // هيبعت الإيرور للـ Global Error Handler بتاعك
+            next(error); 
+        }
+    }
+);
+
+router.patch(
+    "/update-profile",
+    authentication(),
+    cloudFileUpload({
+        validation: fileFieldValidation.image,
+        storageApproach: StorageApproachEnum.DISK
+    }).fields([
+        { name: "profileImage", maxCount: 1 },
+        { name: "coverImages", maxCount: 2 }
+    ]),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await userService.updateProfile(
+                req.body,
+                req.files as {
+                    profileImage?: Express.Multer.File[];
+                    coverImages?: Express.Multer.File[];
+                },
+                req.user
+            );
+
+            return successResponse({ res, data });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+router.patch(
+    "/change-password",
+    authentication(),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await userService.changePassword(
+                req.body,
+                req.user
+            );
+
+            return successResponse({ res, data });
+        } catch (error) {
+            next(error);
         }
     }
 );

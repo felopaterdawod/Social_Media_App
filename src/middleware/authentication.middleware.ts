@@ -16,7 +16,6 @@ export const authentication = (tokenType: TokenTypeEnum = TokenTypeEnum.ACCESS) 
         const tokenService = new TokenService()
 
         const [key, credential] = req.headers?.authorization?.split(" ") || [];
-        console.log({ key, credential });
 
         if (!key || !credential) {
             throw new UnauthorizedException('Missing authorization')

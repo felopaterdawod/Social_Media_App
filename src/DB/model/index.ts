@@ -1,3 +1,5 @@
 export * from "./post.model"
 export * from "./user.model"
 export * from "./comment.model"
+export * from "./reaction.model"
+export * from "./story.model"

@@ -3,10 +3,10 @@ import { authentication, validation } from "../../middleware";
 import { cloudFileUpload, fileFieldValidation } from "../../common/utils/multer";
 import { successResponse } from "../../common/response";
 import * as validators from './post.validation'
-import { postService } from "./post.service";
 import { paginateDto, paginationValidationSchema } from "../../common/validation";
-import { ReactPostParamsDto, ReactPostQueryDto, UpdatePostBodyDto, UpdatePostParamsDto } from "./post.dto";
+import { DeletePostParamsDto, GetSinglePostParamsDto, ReactPostBodyDto, ReactPostParamsDto, UpdatePostBodyDto, UpdatePostParamsDto } from "./post.dto";
 import { commentRouter } from "../comment";
+import { postService } from "./post.service";
 
 
 const router = Router();
@@ -39,15 +39,32 @@ router.get(
 )
 
 
+router.get(
+    "/:postId",
+    authentication(),
+    validation(validators.getSinglePost),
+    async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+
+        const data = await postService.getSinglePost(
+            req.params as GetSinglePostParamsDto,
+            req.user
+        );
+
+        return successResponse({ res, status: 200, data });
+    }
+)
+
+
 router.patch(
     "/:postId/react",
     authentication(),
     validation(validators.reactPost),
-    async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+
+    async (req, res) => {
 
         const data = await postService.reactPost(
             req.params as ReactPostParamsDto,
-            req.query as unknown as ReactPostQueryDto,
+            req.body as ReactPostBodyDto,
             req.user
         )
 
@@ -68,6 +85,21 @@ router.patch(
 )
 
 
+router.delete(
+    "/:postId",
+    authentication(),
+    validation(validators.deletePost),
+
+    async (req: Request, res: Response): Promise<Response> => {
+
+        const data = await postService.deletePost(
+            req.params as DeletePostParamsDto,
+            req.user
+        );
+
+        return successResponse({ res, status: 200, data });
+    }
+)
 
 
 

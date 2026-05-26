@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AvailabilityEnum } from '../../common/enums';
+import { AvailabilityEnum, ReactionEnum, ReactionTargetEnum } from '../../common/enums';
 import { Types } from 'mongoose';
 import { generalValidationFields } from '../../common/validation';
 import { fileFieldValidation } from '../../common/utils/multer';
@@ -44,11 +44,16 @@ export const createPost = {
 
 
 export const reactPost = {
+
     params: z.strictObject({
         postId: generalValidationFields.id
     }),
-    query: z.strictObject({
-        react: z.coerce.number()
+
+    body: z.strictObject({
+        targetType:z.enum(ReactionTargetEnum),
+
+        type: z.enum(ReactionEnum)
+
     })
 }
 
@@ -83,5 +88,18 @@ export const updatePost = {
 
 
         }
+    })
+}
+
+
+export const getSinglePost = {
+    params: z.strictObject({
+        postId: generalValidationFields.id
+    })
+}
+
+export const deletePost = {
+    params: z.strictObject({
+        postId: generalValidationFields.id
     })
 }

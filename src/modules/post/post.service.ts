@@ -1,5 +1,5 @@
 import { HydratedDocument, Types } from "mongoose";
-import { CreatePostBodyDto, ReactPostParamsDto, ReactPostQueryDto, UpdatePostBodyDto, UpdatePostParamsDto } from "./post.dto";
+import { CreatePostBodyDto, DeletePostParamsDto, GetSinglePostParamsDto, ReactPostBodyDto, ReactPostParamsDto, UpdatePostBodyDto, UpdatePostParamsDto } from "./post.dto";
 import { IPaginate, IPost, IUser } from "../../common/interfaces";
 import { NotificationService, notificationService, redisService, RedisService, s3Service, S3Service, TokenService } from "../../common/services";
 import { PostRepository, UserRepository } from "../../DB/repository";
@@ -9,6 +9,9 @@ import { getAvalibality } from "../../common/utils/post";
 import { paginateDto } from "../../common/validation";
 import { toObjectId } from "../../common/utils/objectId";
 import { populate } from "dotenv";
+import { PostModel } from "../../DB/model";
+import { ReactionRepository } from "../../DB/repository/reaction.repository";
+import { IReaction } from "../../common/interfaces/reaction.interface";
 
 export class PostService {
 
@@ -16,6 +19,7 @@ export class PostService {
     private readonly tokenService: TokenService;
     private readonly userRepository: UserRepository;
     private readonly postRepository: PostRepository;
+    private readonly reactionRepository: ReactionRepository;
     private readonly s3: S3Service;
     private readonly notification: NotificationService
 
@@ -25,6 +29,7 @@ export class PostService {
         this.tokenService = new TokenService()
         this.userRepository = new UserRepository()
         this.postRepository = new PostRepository()
+        this.reactionRepository = new ReactionRepository()
         this.s3 = s3Service
         this.notification = notificationService
 
@@ -118,7 +123,29 @@ export class PostService {
 
             }, page, size,
             options: {
-                populate: [{ path: "comments" , populate: [{path:"reply" , populate: [{path:"reply"}]}] }]
+                populate: [
+                    { path: "reactions" },
+
+                    {
+                        path: "comments",
+                        populate: [
+                            {
+                                path: "reactions"
+                            },
+                            {
+                                path: "reply",
+                                populate: [
+                                    {
+                                        path: "reactions"
+                                    },
+                                    {
+                                        path: "reply"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
         })
 
@@ -127,25 +154,6 @@ export class PostService {
 
     }
 
-
-    async reactPost({ postId }: ReactPostParamsDto, { react }: ReactPostQueryDto, user: HydratedDocument<IUser>): Promise<IPost> {
-
-        const post = await this.postRepository.findOneAndUpdate({
-            filter: {
-                _id: postId,
-                $or: getAvalibality(user),
-            },
-            update: {
-                ...(Number(react) > 0 ? { $addToSet: { likes: user._id } } : { $pull: { likes: user._id } })
-            }
-        })
-
-        if (!post) {
-            throw new NotFoundException("Fail to find matching post")
-        }
-        return post.toJSON()
-
-    }
 
 
     async updatePost({ postId }: UpdatePostParamsDto, { availability, content, files = [], tags = [], removeFiles = [], removeTags = [] }: UpdatePostBodyDto, user: HydratedDocument<IUser>): Promise<IPost> {
@@ -268,6 +276,137 @@ export class PostService {
 
 
     }
+
+    async reactPost({ postId }: ReactPostParamsDto, { type }: ReactPostBodyDto, user: HydratedDocument<IUser>): Promise<IReaction | { message: string }> {
+
+        const post = await this.postRepository.findOne({
+            filter: {
+                _id: postId,
+                $or: getAvalibality(user)
+            }
+        });
+
+        if (!post) {
+            throw new NotFoundException("Fail to find matching post");
+        }
+
+        const oldReaction = await this.reactionRepository.findOne({
+            filter: {
+                targetId: toObjectId(postId),
+                targetType: 'POST',
+                userId: user._id
+            }
+        }) as unknown as HydratedDocument<IReaction> | null;
+
+
+
+        if (oldReaction?.type === type) {
+
+            await this.reactionRepository.deleteOne({
+
+                filter: {
+                    _id: oldReaction._id
+                }
+            });
+
+            return {
+                message: "Reaction removed"
+            };
+        }
+
+        if (oldReaction) {
+            await this.reactionRepository.updateOne({
+                filter: {
+                    _id: oldReaction._id
+                },
+                update: {
+                    type
+                }
+            });
+            return {
+                message: "Reaction updated"
+            };
+        }
+
+        await this.reactionRepository.createOne({
+            data: {
+                userId: user._id,
+                targetId: toObjectId(postId),
+                targetType: "POST",
+                type
+            }
+        });
+
+        return {
+            message: "Reaction added"
+        };
+    }
+
+
+
+
+    async getSinglePost({ postId }: GetSinglePostParamsDto, user: HydratedDocument<IUser>): Promise<IPost> {
+
+        const post = await this.postRepository.findOne({
+            filter: {
+                _id: postId,
+                $or: getAvalibality(user)
+            },
+            options: {
+                populate: [
+                    { path: "reactions" },
+                    {
+                        path: "comments",
+                        populate: [
+                            { path: "reactions" },
+                            { path: "reply" }
+                        ]
+                    }
+                ],
+                lean: true
+            }
+        }) as unknown as IPost;
+
+        if (!post) {
+            throw new NotFoundException("Fail to find matching post");
+        }
+
+        return post
+    }
+
+    async deletePost({ postId }: DeletePostParamsDto, user: HydratedDocument<IUser>): Promise<{ message: string }> {
+
+        const post = await this.postRepository.findOne({
+            filter: {
+                _id: postId,
+                createdBy: user._id
+            }
+        }) as unknown as HydratedDocument<IPost>
+            ;
+
+        if (!post) {
+            throw new NotFoundException("Fail to find matching post");
+        }
+
+        if (post.attachments?.length) {
+            await this.s3.deleteAssets({
+                Keys: post.attachments.map((file) => {
+                    return { Key: file }
+                })
+            });
+        }
+
+        await this.postRepository.deleteOne({
+            filter: {
+                _id: postId
+            }
+        });
+
+        return {
+            message: "Post deleted successfully"
+        };
+    }
+
 
 
 

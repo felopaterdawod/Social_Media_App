@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { generalValidationFields } from '../../common/validation';
 import { fileFieldValidation } from '../../common/utils/multer';
+import { ReactionEnum, ReactionTargetEnum } from '../../common/enums';
 
 export const createComment = {
     params: z.strictObject({
@@ -40,4 +41,42 @@ export const replyOnComment = {
         commentId: generalValidationFields.id
     }),
     body: createComment.body
+}
+
+
+export const reactComment = {
+
+    params: z.strictObject({
+        postId: generalValidationFields.id,
+
+
+        commentId: generalValidationFields.id
+
+    }),
+
+    body: z.strictObject({
+
+        targetType: z.enum(ReactionTargetEnum),
+
+        type: z.enum(ReactionEnum)
+
+    })
+}
+
+export const updateComment = {
+    params: z.strictObject({
+        postId: generalValidationFields.id,
+        commentId: generalValidationFields.id
+    }),
+
+    body: z.strictObject({
+        content: z.string().min(1)
+    })
+}
+
+export const deleteComment = {
+    params: z.strictObject({
+        postId: generalValidationFields.id,
+        commentId: generalValidationFields.id
+    })
 }

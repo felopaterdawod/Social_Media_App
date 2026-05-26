@@ -19,7 +19,6 @@ const commentSchema = new Schema<IComment>({
         default: []
     },
 
-    likes: [{ type: Types.ObjectId, ref: "User" }],
     tags: [{ type: Types.ObjectId, ref: "User" }],
     postId: [{ type: Types.ObjectId, ref: "Post", required: true }],
     commentId: [{ type: Types.ObjectId, ref: "Comment" }],
@@ -42,7 +41,7 @@ const commentSchema = new Schema<IComment>({
         toJSON: { virtuals: true },
         strict: true,
         strictQuery: true,
-        collection: "SOCIAL_APP_POSTS"
+        collection: "SOCIAL_APP_COMMENTS"
 
 
     })
@@ -53,6 +52,19 @@ commentSchema.virtual("reply", {
     foreignField: "commentId",
     ref: "Comment"
 })
+
+commentSchema.virtual("reactions", {
+
+    ref: "Reaction",
+
+    localField: "_id",
+
+    foreignField: "targetId",
+
+    match: {
+        targetType: "COMMENT"
+    }
+});
 
 
 

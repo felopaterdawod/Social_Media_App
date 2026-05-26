@@ -58,6 +58,9 @@ export class AuthenticationService {
     };
 
 
+
+
+
     private async sendEmailOtp({ email, subject, title }: { email: string, subject: EmailEnum, title: string }) {
 
         const isBlockedTTL = await this.redis.ttl(this.redis.blockOtpKey({ email, subject }))
@@ -167,8 +170,7 @@ export class AuthenticationService {
         const account = await this.userRepository.findOne({
             filter: { email, confirmEmail: { $exists: false }, provider: ProviderEnum.SYSTEM }
         })
-        console.log(account);
-        console.log(email);
+
 
 
         if (!account) {
@@ -209,7 +211,6 @@ export class AuthenticationService {
     async signupWithGmail(idToken: string, issuer: string) {
 
         const payload = await this.verifyGoogleAccount(idToken);
-        console.log(payload);
 
 
         const checkExist = await this.userRepository.findOne({

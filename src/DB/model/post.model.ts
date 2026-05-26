@@ -1,7 +1,6 @@
 import { models, Schema, model, Query, HydratedDocument, Types, CallbackWithoutResult, CallbackWithoutResultAndOptionalError } from "mongoose";
 import { AvailabilityEnum } from "../../common/enums";
 import { IPost } from "../../common/interfaces";
-import { NextFunction } from "express";
 
 
 
@@ -20,7 +19,6 @@ const postSchema = new Schema<IPost>({
     },
 
     availability: { type: Number, enum: AvailabilityEnum, default: AvailabilityEnum.PUBLIC },
-    likes: [{ type: Types.ObjectId, ref: "User" }],
     tags: [{ type: Types.ObjectId, ref: "User" }],
     updatedBy: { type: Types.ObjectId, ref: "User" },
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
@@ -52,6 +50,19 @@ postSchema.virtual("comments", {
     ref: "Comment",
     justOne: true
 })
+
+postSchema.virtual("reactions", {
+
+    ref: "Reaction",
+
+    localField: "_id",
+
+    foreignField: "targetId",
+
+    match: {
+        targetType: "POST"
+    }
+});
 
 
 

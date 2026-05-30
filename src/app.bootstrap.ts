@@ -1,6 +1,6 @@
 import express from 'express'
-import { authRouter, postRouter, userRouter } from './modules';
-import { globalErrorHandler } from './middleware';
+import { authRouter, postRouter, schema, userRouter } from './modules';
+import { authentication, globalErrorHandler } from './middleware';
 import { PORT } from './config/config';
 import connectDB from './DB/connection.db';
 import { notificationService, redisService, s3Service } from './common/services';
@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 import { pipeline } from 'node:stream';
 import { successResponse } from './common/response';
 import { storyRouter } from './modules/story';
+import { createHandler } from 'graphql-http/lib/use/express';
 
 
 
@@ -21,21 +22,22 @@ const bootstrap = async (): Promise<void> => {
 
     app.use(express.json(), cors());
 
-
+    app.all('/graphql', authentication(), createHandler({ schema: schema, context: (req) => ({ user: req.raw.user  , decoded : req.raw.decoded }) }))
     app.get('/', (req: express.Request, res: express.Response, next: express.NextFunction): express.Response => {
+        
         return res.status(200).json({ message: "Landing Page" })
     })
 
-     app.post('/send-notification', async(req: express.Request, res: express.Response, next: express.NextFunction):Promise<express.Response> => {
-        console.log({token:req.body.token});
+    app.post('/send-notification', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<express.Response> => {
+        console.log({ token: req.body.token });
         await notificationService.sendNotification({
-            token : req.body.token,
-            data:{
-                title:"first time",
+            token: req.body.token,
+            data: {
+                title: "first time",
                 body: 'hello world'
             }
         })
-        
+
         return res.status(200).json({ message: "Landing Page" })
     })
 
@@ -44,7 +46,7 @@ const bootstrap = async (): Promise<void> => {
     app.use("/auth", authRouter)
     app.use("/user", userRouter)
     app.use("/post", postRouter)
-    app.use("/story", storyRouter);
+    app.use("/story", storyRouter)
 
 
     app.get("/uploads/*path", async (req: express.Request, res: express.Response, next: express.NextFunction) => {

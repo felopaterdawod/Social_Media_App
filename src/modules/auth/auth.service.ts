@@ -58,9 +58,6 @@ export class AuthenticationService {
     };
 
 
-
-
-
     private async sendEmailOtp({ email, subject, title }: { email: string, subject: EmailEnum, title: string }) {
 
         const isBlockedTTL = await this.redis.ttl(this.redis.blockOtpKey({ email, subject }))

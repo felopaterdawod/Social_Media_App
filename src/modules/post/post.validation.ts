@@ -103,3 +103,8 @@ export const deletePost = {
         postId: generalValidationFields.id
     })
 }
+
+export const reactOnPostGQL = z.strictObject({
+    postId: generalValidationFields.id,
+    react: z.coerce.number()
+});

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createPost, deletePost, getSinglePost, reactPost, updatePost } from './post.validation';
+import { createPost, deletePost, getSinglePost, reactOnPostGQL, reactPost, updatePost } from './post.validation';
 
 
 export type CreatePostBodyDto = z.infer<typeof createPost.body>
@@ -11,3 +11,6 @@ export type UpdatePostParamsDto = z.infer<typeof updatePost.params>
 export type GetSinglePostParamsDto = z.infer<typeof getSinglePost.params>
 
 export type DeletePostParamsDto = z.infer<typeof deletePost.params>
+
+
+export type ReactOnPostArgsDto = z.infer<typeof reactOnPostGQL>

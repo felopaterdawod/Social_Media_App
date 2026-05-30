@@ -1,5 +1,5 @@
  export enum AvailabilityEnum {
     PUBLIC,
-    FREINDS,
+    FRIENDS,
     ONLY_ME
  }

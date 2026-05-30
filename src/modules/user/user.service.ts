@@ -8,7 +8,7 @@ import { UserRepository } from "../../DB/repository";
 import { ChangePasswordDto } from "./user.dto";
 import { compareHash, generateHash } from "../../common/utils/security";
 
-class UserService {
+export class UserService {
     private readonly redis: RedisService;
     private readonly tokenService: TokenService;
     private readonly userRepository: UserRepository;

@@ -29,14 +29,13 @@ export class UserService {
             Originalname,
         })
 
-        console.log(`ContentType: ${ContentType}`);
 
-        // user.profilePicture = key as string
-        // await user.save()
+        user.profilePicture = key as string
+        await user.save()
 
-        // if (oldPic) {
-        //     await this.s3.deleteAsset({Key:oldPic})
-        // }
+        if (oldPic) {
+            await this.s3.deleteAsset({Key:oldPic})
+        }
         return { url, user }
     }
 
@@ -65,8 +64,9 @@ export class UserService {
 
         return user.toJSON();
     }
-    async profile(user: HydratedDocument<IUser>): Promise<any> {
-        return user.toJSON()
+    async profile(user: HydratedDocument<IUser>): Promise<{ user: IUser }> {
+        await user.populate([{ path: "friends" }])
+        return { user: user.toJSON() }
     }
 
     async logout({ flag }: { flag: LogoutEnum }, user: HydratedDocument<IUser>, { jti, iat, sub }: { jti: string, iat: number, sub: string }): Promise<number> {
@@ -187,38 +187,38 @@ export class UserService {
         return user.toJSON();
     }
 
-    async changePassword(body: ChangePasswordDto,user: HydratedDocument<IUser>) {
-    const { oldPassword, newPassword } = body;
+    async changePassword(body: ChangePasswordDto, user: HydratedDocument<IUser>) {
+        const { oldPassword, newPassword } = body;
 
-    const account = await this.userRepository.findOne({
-        filter: { _id: user._id }
-    });
+        const account = await this.userRepository.findOne({
+            filter: { _id: user._id }
+        });
 
-    if (!account) {
-        throw new NotFoundException("User not found");
+        if (!account) {
+            throw new NotFoundException("User not found");
+        }
+
+        if (!account.password) {
+            throw new BadRequestException("Invalid account");
+        }
+
+        const isMatched = await compareHash({
+            plainText: oldPassword,
+            cipherText: account.password
+        });
+
+        if (!isMatched) {
+            throw new BadRequestException("Old password is incorrect");
+        }
+
+        account.password = newPassword;
+
+        await account.save();
+
+        return {
+            message: "Password changed successfully"
+        };
     }
-
-    if (!account.password) {
-        throw new BadRequestException("Invalid account");
-    }
-
-    const isMatched = await compareHash({
-        plainText: oldPassword,
-        cipherText: account.password
-    });
-
-    if (!isMatched) {
-        throw new BadRequestException("Old password is incorrect");
-    }
-
-    account.password = newPassword;
-
-    await account.save();
-
-    return {
-        message: "Password changed successfully"
-    };
-}
 }
 
 export default new UserService()

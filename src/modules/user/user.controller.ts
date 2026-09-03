@@ -4,7 +4,7 @@ import { authentication, } from "../../middleware/authentication.middleware";
 import userService from "./user.service";
 import { authorization } from "../../middleware";
 import { endpoint } from "./user.authorization";
-import {  StorageApproachEnum, TokenTypeEnum} from "../../common/enums";
+import { StorageApproachEnum, TokenTypeEnum } from "../../common/enums";
 import { cloudFileUpload, fileFieldValidation } from "../../common/utils/multer";
 
 const router = Router();
@@ -13,37 +13,53 @@ const router = Router();
 router.patch("/profile-cover-images",
     authentication(),
     cloudFileUpload({
-        validation:fileFieldValidation.image,
-        storageApproach:StorageApproachEnum.DISK,
-        
-    }).array("attachments",2),
+        validation: fileFieldValidation.image,
+        storageApproach: StorageApproachEnum.DISK,
+
+    }).array("attachments", 2),
     async (req: Request, res: Response, next: NextFunction) => {
-        const data = await userService.profileCoverImages(req.files as Express.Multer.File[],req.user)
+        const data = await userService.profileCoverImages(req.files as Express.Multer.File[], req.user)
         return successResponse({ res, data });
     });
 //================================================================
-    router.patch("/profile-image",
+router.patch("/profile-image",
     authentication(),
     cloudFileUpload({
-        validation:fileFieldValidation.image,
-        storageApproach:StorageApproachEnum.DISK,
-        
+        validation: fileFieldValidation.image,
+        storageApproach: StorageApproachEnum.DISK,
     }).single("attachment"),
     async (req: Request, res: Response, next: NextFunction) => {
-        const data = await userService.profileImage(req.body ,req.user)
+        
+        // 🔍 سطر للـ Debugging: افتح الـ Terminal وشوف الـ Body قاري إيه بالظبط
+        console.log("الـ Body اللي جاي من بوستمان أو الفرونت:", req.body);
+
+        // تأمين الداتا بوضع قيم افتراضية منعاً للـ undefined
+        const contentType = req.body.contentType || req.body.ContentType || "image/png";
+        const originalname = req.body.originalname || req.body.Originalname || `avatar_${Date.now()}.png`;
+
+        const data = await userService.profileImage({
+            ContentType: contentType,
+            Originalname: originalname
+        }, req.user);
+
         return successResponse({ res, data });
-    });
+    }
+);
 
 router.get("/",
     authentication(),
     authorization(endpoint.profile),
     async (req: Request, res: Response, next: NextFunction) => {
-        const data = await userService.profile(req.user)
-        return successResponse({ res, data });
+        try {
+            const data = await userService.profile(req.user);
+            return successResponse({ res, data });
+        } catch (error) {
+            next(error); // هنا بنمرر الخطأ للـ globalErrorHandler عشان يطبع الـ stack في المتصفح
+        }
     });
 
 
-    router.post("/logout", authentication(), async (req, res, next) => {
+router.post("/logout", authentication(), async (req, res, next) => {
     const status = await userService.logout(req.body, req.user, req.decoded as { jti: string, iat: number, sub: string })
     return successResponse({ res, status })
 })
@@ -54,7 +70,7 @@ router.post("/rotate-token", authentication(TokenTypeEnum.REFRESH), async (req, 
 })
 
 
-;
+    ;
 
 
 router.delete("/",
@@ -64,7 +80,7 @@ router.delete("/",
             const data = await userService.deleteProfile(req.user);
             return successResponse({ res, data });
         } catch (error) {
-            next(error); 
+            next(error);
         }
     }
 );

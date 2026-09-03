@@ -10,6 +10,7 @@ import { pipeline } from 'node:stream';
 import { successResponse } from './common/response';
 import { storyRouter } from './modules/story';
 import { createHandler } from 'graphql-http/lib/use/express';
+import { Server } from 'socket.io';
 
 
 
@@ -20,11 +21,17 @@ const bootstrap = async (): Promise<void> => {
 
     const app: express.Express = express();
 
-    app.use(express.json(), cors());
+    app.use(express.json());
 
-    app.all('/graphql', authentication(), createHandler({ schema: schema, context: (req) => ({ user: req.raw.user  , decoded : req.raw.decoded }) }))
+    app.use(cors({
+        origin: 'http://127.0.0.1:5500', // رابط الـ Live Server للفرونت إند الخاص بك
+        credentials: true
+    }));
+
+
+    app.all('/graphql', authentication(), createHandler({ schema: schema, context: (req) => ({ user: req.raw.user, decoded: req.raw.decoded }) }))
     app.get('/', (req: express.Request, res: express.Response, next: express.NextFunction): express.Response => {
-        
+
         return res.status(200).json({ message: "Landing Page" })
     })
 
@@ -110,9 +117,23 @@ const bootstrap = async (): Promise<void> => {
 
 
 
-    app.listen(PORT, () => {
+    const httpServer = app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}🚀🚀🚀`);
 
+    })
+
+     
+
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "http://127.0.0.1:5500", // نفس رابط الفرونت إند
+            methods: ["GET", "POST"],
+            credentials: true
+        }
+    });
+
+    io.on("connection", (socket) => {
+        console.log("User Connected via Socket:", socket.id);
     })
 
 

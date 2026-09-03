@@ -13,3 +13,7 @@ export interface IAuthUser {
     user: HydratedDocument<IUser>,
     decoded: JwtPayload
 }
+
+export interface IAuthSocket {
+    data : IAuthUser
+}

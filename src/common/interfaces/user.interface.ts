@@ -15,7 +15,7 @@ export interface IUser {
     friends?: Types.ObjectId[] | IUser[];
 
 
-    gender: GenderEnum,
+    gender?: GenderEnum,
     role: RoleEnum,
     provider: ProviderEnum,
 

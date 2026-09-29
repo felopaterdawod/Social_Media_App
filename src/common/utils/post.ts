@@ -6,7 +6,7 @@ export const getAvalibality = (user: HydratedDocument<IUser>) => {
     return [
         { availability: AvailabilityEnum.PUBLIC },
         { availability: AvailabilityEnum.ONLY_ME, createdBy: user._id },
-        { availability: AvailabilityEnum.FREINDS, createdBy: { $in: [user._id, ...(user.friends || [])] } },
+        { availability: AvailabilityEnum.FRIENDS, createdBy: { $in: [user._id, ...(user.friends || [])] } },
         { tags: { $in: [user._id] } }
     ];
 }

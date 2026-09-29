@@ -118,7 +118,8 @@ export class AuthenticationService {
                 email,
                 username,
                 password,
-                phone
+                phone,
+                gender: "male",
             }
         })
 

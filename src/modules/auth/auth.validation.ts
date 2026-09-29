@@ -52,6 +52,7 @@ export const signup = {
     body: login.body.safeExtend({
         
         username: generalValidationFields.username,
+        gender: generalValidationFields.gender.optional(),
         phone:generalValidationFields.phone.optional(),
         confirmPassword: generalValidationFields.confirmPassword, 
     }).refine((data)=>{

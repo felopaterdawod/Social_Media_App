@@ -24,8 +24,11 @@ const userSchema = new Schema<IUser>({
     ProfileCoverPictures: { type: [String] },
 
 
-    gender: { type: Number, enum: GenderEnum, default: GenderEnum.MALE },
-    role: { type: Number, enum: RoleEnum, default: RoleEnum.USER },
+gender: {
+    type: String,
+    enum: Object.values(GenderEnum),
+    default: GenderEnum.MALE
+},    role: { type: Number, enum: RoleEnum, default: RoleEnum.USER },
     provider: { type: Number, enum: ProviderEnum, default: ProviderEnum.SYSTEM },
 
     friends: [{ type: Types.ObjectId, ref: "User" }],

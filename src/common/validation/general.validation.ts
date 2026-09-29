@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { z } from 'zod';
+import { GenderEnum } from '../enums';
 
 
 
@@ -13,6 +14,7 @@ export const generalValidationFields = {
     confirmPassword: z.string(),
     phone: z.string({ error: "Phone is required" }).regex(new RegExp(/^(00201|\+201|01)(0|1|2|5)\d{8}$/)),
     otp: z.string({ error: "otp is required" }).regex(new RegExp(/^\d{6}$/)),
+    gender: z.enum(GenderEnum).optional(),
     file: function (mimetype: string[]) {
         return z.strictObject({
             fieldname: z.string(),

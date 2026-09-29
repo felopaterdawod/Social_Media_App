@@ -36,3 +36,8 @@ export const AWS_BUCKET_NAME=process.env.AWS_BUCKET_NAME as string
 export const AWS_ACCESS_KEY_ID=process.env.AWS_ACCESS_KEY_ID as string
 export const AWS_SECRET_ACCESS_KEY=process.env.AWS_SECRET_ACCESS_KEY as string
 export const AWS_EXPIRES_IN=parseInt(process.env.AWS_EXPIRES_IN as string || "120")
+
+
+export const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID as string
+export const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL as string
+export const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY as string
